@@ -1,0 +1,427 @@
+<template>
+  <div class="page">
+    <el-card class="card" shadow="hover">
+      <template #header>
+        <div class="header">案件材料管理</div>
+      </template>
+
+      <el-divider content-position="left">案件管理</el-divider>
+      <div class="toolbar">
+        <el-select v-model="currentCaseId" placeholder="选择案件" style="width:260px">
+          <el-option
+        v-for="c in cases"
+        :key="c.id || Math.random()" 
+       :label="`${c.name || '无名称'}（${c.caseNo || '无编号'}）`"
+       :value="c.id || ''" 
+        />
+        </el-select>
+        <el-button type="primary" @click="caseDialogVisible = true">新建案件</el-button>
+        <el-button type="danger" :disabled="!currentCase" @click="handleDeleteCase">删除当前案件</el-button>
+      </div>
+
+      <el-dialog v-model="caseDialogVisible" title="新建案件" width="520px">
+        <el-form :model="caseForm" label-position="top">
+          <el-form-item label="案件名称"><el-input v-model="caseForm.name" /></el-form-item>
+          <el-form-item label="案件编号"><el-input v-model="caseForm.caseNo" /></el-form-item>
+          <el-form-item label="相关人员"><el-input v-model="caseForm.people" /></el-form-item>
+          <el-form-item label="案件说明"><el-input type="textarea" :rows="3" v-model="caseForm.desc" /></el-form-item>
+        </el-form>
+        <template #footer>
+          <el-button @click="caseDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleSaveCase">保存案件</el-button>
+        </template>
+      </el-dialog>
+
+      <div v-if="currentCase" style="margin-top: 20px;">
+        <el-divider content-position="left">案件基本信息</el-divider>
+        <el-descriptions :column="2" size="small">
+          <el-descriptions-item label="名称">{{ currentCase.name }}</el-descriptions-item>
+          <el-descriptions-item label="编号">{{ currentCase.caseNo }}</el-descriptions-item>
+          <el-descriptions-item label="相关人员">{{ currentCase.people || '未填写' }}</el-descriptions-item>
+          <el-descriptions-item label="说明">{{ currentCase.desc || '未填写' }}</el-descriptions-item>
+        </el-descriptions>
+
+        <el-divider content-position="left">OCR 文字识别</el-divider>
+        <el-upload :show-file-list="false" accept="image/*" :auto-upload="false" :on-change="handleOcr">
+          <el-button type="primary" :loading="ocrLoading">上传图片进行识别</el-button>
+        </el-upload>
+        <el-progress 
+          v-if="ocrLoading" 
+         :percentage="ocrProgress" 
+         :striped="true" 
+         :striped-flow="true" 
+         style="margin-top: 10px" 
+       />
+
+        <el-table :data="currentCase.ocrHistory" size="small" style="margin-top:15px" border>
+          <el-table-column prop="time" label="识别时间" width="160" />
+          <el-table-column prop="preview" label="内容预览" show-overflow-tooltip />
+          <el-table-column label="操作" width="150">
+            <template #default="scope">
+              <el-button type="primary" link @click="openOcrDetail(scope.row, scope.$index)">详情</el-button>
+              <el-button type="danger" link @click="confirmDeleteOcr(scope.$index)">删除</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+
+        <el-divider content-position="left">案件附件</el-divider>
+                 <el-upload
+                 drag
+              multiple
+             :auto-upload="false"
+              :show-file-list="false"  :on-change="handleFileChange"
+              >
+          <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
+                </el-upload>
+
+            <el-table :data="currentCase.files" size="small" style="margin-top:10px" >
+            <el-table-column prop="name" label="文件名" min-width="200" show-overflow-tooltip />
+            <el-table-column prop="size" label="大小" :formatter="formatSize" width="100" />
+            <el-table-column label="操作" width="160" fixed="right">
+           <template #default="scope">
+           <el-button type="primary" link @click="previewFile(scope.row)">预览</el-button>
+            <el-button type="danger" link @click="handleRemove(scope.row, currentCase.files)">删除</el-button>
+          </template>
+         </el-table-column>
+</el-table>
+      </div>
+      <el-empty v-else description="请先在上方新建或选择一个案件" />
+
+      <el-dialog v-model="detailVisible" title="识别全文" width="600px" append-to-body>
+        <div class="detail-content">
+          <pre>{{ activeOcrText }}</pre>
+        </div>
+        <template #footer>
+          <el-button type="danger" @click="deleteFromDetail">删除此条记录</el-button>
+          <el-button @click="detailVisible = false">关闭</el-button>
+        </template>
+      </el-dialog>
+
+      <el-dialog v-model="previewVisible" title="材料预览" width="80%">
+        <iframe :src="previewUrl" style="width:100%;height:70vh" />
+      </el-dialog>
+    </el-card>
+  </div>
+</template>
+
+<script setup>
+import { ref , onMounted } from 'vue'
+import { storeToRefs } from 'pinia'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import Tesseract from 'tesseract.js'
+import { useCaseStore } from '@/tools/useCaseStore'
+import axios from 'axios'
+import { loginStore } from '@/tools/Storage'
+import { baseURL } from '@/config'
+//const baseURL = 'http://localhost:8081'
+
+
+// 初始化 Pinia Store
+const store = useCaseStore()
+const { cases, currentCaseId, currentCase } = storeToRefs(store)
+const userStore = loginStore()
+
+/* 状态控制 */
+const caseDialogVisible = ref(false)
+const caseForm = ref({ name: '', caseNo: '', people: '', desc: '' })
+const ocrLoading = ref(false)
+const ocrProgress = ref(0)
+const previewVisible = ref(false)
+const previewUrl = ref('')
+const previewType = ref('')
+
+// OCR 详情弹窗状态
+const detailVisible = ref(false)
+const activeOcrText = ref('')
+const activeOcrIndex = ref(-1)
+
+
+onMounted(async () => {
+  // 页面加载时，根据当前登录用户去数据库刷数据
+  // 这会覆盖掉 localStorage 里的旧数据，保证同步
+  await store.fetchCases()
+})
+/* --- 案件管理逻辑 --- */
+const handleSaveCase = async () => {
+  // 1. 基础校验
+  if (!caseForm.value.name) {
+    return ElMessage.warning('案件名称不能为空')
+  }
+
+  try {
+    // 2. 调用 store 里的异步方法，等待后端返回数据库 ID
+    // 此时 store.saveCase 内部会执行 axios.post
+    await store.saveCase({ ...caseForm.value })
+
+    // 3. 只有后端保存成功后，才执行以下 UI 逻辑
+    caseDialogVisible.value = false
+    
+    // 重置表单
+    caseForm.value = { 
+      name: '', 
+      caseNo: '', 
+      people: '', 
+      desc: '' 
+    }
+    
+    ElMessage.success('案件创建成功并已存入数据库')
+  } catch (error) {
+    // 捕获网络错误或后端报错
+    console.error("保存案件失败:", error)
+    ElMessage.error('案件创建失败，请检查网络或后端状态')
+  }
+}
+
+const handleDeleteCase = async () => {
+  try {
+    // 1. 确认弹窗
+    await ElMessageBox.confirm(
+      '确定删除该案件及其所有识别记录和文件吗？此操作不可撤销！', 
+      '严正警告', 
+      { 
+        type: 'warning',
+        confirmButtonText: '彻底删除',
+        cancelButtonText: '取消',
+        confirmButtonClass: 'el-button--danger' // 让确定按钮变红
+      }
+    );
+
+    // 2. 执行删除
+    await store.deleteCase();
+
+    // 3. 提示并自动跳转（如果是从案件详情页删除，需要回退到列表页）
+    ElMessage.success('案件已成功移除');
+    
+    // 如果你在详情页，建议跳转回案件列表或首页
+    // router.push('/dashboard'); 
+
+  } catch (error) {
+    // 捕获取消操作或接口错误
+    if (error === 'cancel') {
+      console.log('用户取消了案件删除');
+    } else {
+      ElMessage.error('删除案件失败，请检查网络或权限');
+    }
+  }
+};
+
+
+/* --- OCR 识别逻辑 --- */
+const handleOcr = async (file) => {
+  // 基础校验
+  const currentUser = userStore.userName;
+  if (!currentUser || !currentCaseId.value) {
+    ElMessage.warning('请先登录并选择案件');
+    return;
+  }
+
+  ocrLoading.value = true;
+  ocrProgress.value = 0;
+
+  // 1. 正确写法：在 createWorker 的第三个参数里传入 logger
+  const worker = await Tesseract.createWorker('chi_sim+eng', 1, {
+    logger: m => {
+      if (m.status === 'recognizing text') {
+        ocrProgress.value = Math.round(m.progress * 100);
+      }
+    }
+  });
+
+  try {
+    // 2. recognize 现在只需要传入图片数据，不要传第二个语言参数和第三个配置对象
+    const res = await worker.recognize(file.raw);
+
+    // 3. 准备新记录
+    const newRecord = {
+      time: new Date().toLocaleString(),
+      text: res.data.text,
+      fileName: file.name,
+      preview: res.data.text ? res.data.text.slice(0, 50) + '...' : '无文字内容',
+    };
+
+    // 4. 更新本地 Store
+    if (!currentCase.value.ocrHistory) currentCase.value.ocrHistory = [];
+    currentCase.value.ocrHistory.unshift(newRecord);
+
+    // 5. 同步后端 (使用 POST 绕过网关 PATCH 限制)
+    await axios.post(`${baseURL}/api/cases/${currentCaseId.value}/ocr`, {
+      username: currentUser,
+      ocr_history: currentCase.value.ocrHistory
+    });
+
+    ElMessage.success('识别结果已存入您的个人记录');
+  } catch (e) {
+    console.error("OCR 详细失败信息:", e);
+    ElMessage.error('识别出错，请检查网络或图片格式');
+  } finally {
+    // 6. 务必在 finally 里 terminate，防止内存泄漏
+    await worker.terminate();
+    ocrLoading.value = false;
+    ocrProgress.value = 0;
+  }
+}
+
+const openOcrDetail = (row, index) => {
+  activeOcrText.value = row.text
+  activeOcrIndex.value = index
+  detailVisible.value = true
+}
+
+const confirmDeleteOcr = async (index) => { // 1. 添加 async
+  try {
+    // 2. 添加 await，这会让 try...catch 真正生效
+    await ElMessageBox.confirm('确定删除该条识别记录？', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    });
+
+    // 3. 只有点击“确定”才会执行这里
+    store.deleteOcrRecord(index);
+    ElMessage.success('已删除');
+
+  } catch (error) {
+    // 4. 用户点击“取消”或关闭弹窗，会进入这里
+    if (error === 'cancel') {
+      console.log('用户取消了删除操作');
+    } else {
+      console.error('删除过程出错:', error);
+    }
+  }
+};
+
+const deleteFromDetail = () => {
+  store.deleteOcrRecord(activeOcrIndex.value)
+  detailVisible.value = false
+  ElMessage.success('已从详情中删除')
+}
+
+/* --- 文件管理逻辑 --- */
+const handleFileChange = async (file, fileList) => {
+  if (file && file.raw) {
+    try {
+      await store.uploadFileToMinio(file.raw); // 传 file.raw !!
+    } catch (err) {
+      console.error("上传失败", err);
+    }
+  }
+  if (currentCase.value) {
+    
+    currentCase.value.files = fileList
+    await store.fetchCases()
+  }
+}
+
+const handleRemove = async (file,fileList) => {
+  // 情况 A：如果是本地选定但还未上传到云端的文件，直接更新本地列表
+  if (!file.path) {
+    currentCase.value.files = fileList;
+    return;
+  }
+   console.log("点击了删除按钮", file); // 如果点击没反应，这行就不会打印
+  // 情况 B：已上传的文件，需要前后端同步删除
+  try{
+    await ElMessageBox.confirm('此操作将永久删除该云端文件，是否继续？', '警告', {
+      type: 'warning',
+      confirmButtonText: '确定',
+      cancelButtonText: '取消'
+    });
+    await store.removeFile(file, fileList)
+    await store.fetchCases()
+    ElMessage.success('文件已删除')
+}catch (error) {
+    // 处理取消逻辑
+    if (error === 'cancel') {
+      console.log('用户取消了删除');
+    } else {
+      console.error('删除过程出错:', error);
+    }
+  }
+}
+/* --- 改进后的文件管理逻辑 --- */
+
+const previewFile = async (file) => {
+  // 1. 如果有 raw 对象（刚选中的文件），使用本地 URL 快速预览
+  if (file.raw) {
+    previewUrl.value = URL.createObjectURL(file.raw)
+    previewType.value = file.raw.type // 记录文件类型
+    previewVisible.value = true
+    return
+  }
+
+  // 2. 如果没有 raw（历史上传的文件），从后端获取 MinIO 签名 URL
+  // 这里的 file.path 是你之前 uploadFileToMinio 存入 currentCase.value.files 的路径
+  if (file.path) {
+    const url = await store.getFilePreviewUrl(file.path)
+    if (url) {
+      previewUrl.value = url
+      previewType.value = file.type || '' 
+      previewVisible.value = true
+    } else {
+      ElMessage.error('无法获取文件预览地址')
+    }
+  } else {
+    ElMessage.warning('该文件缺少路径信息，无法预览')
+  }
+}
+
+const formatSize = (row, col, val) => {
+  if (!val) return '0 B'
+  const units = ['B', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(val) / Math.log(1024))
+  return (val / Math.pow(1024, i)).toFixed(1) + ' ' + units[i]
+}
+
+
+</script>
+<style scoped>
+.page { 
+  padding: 30px; 
+  background: #f5f7fa; 
+  min-height: 100vh; 
+  display: flex; 
+  justify-content: center; 
+  border-radius: 10px;
+  /* 新增：提升页面基础字号 */
+  font-size: 16px;
+}
+
+.card { 
+  width: 1000px; 
+  border-radius: 12px; 
+}
+
+.header { 
+  /* 原 20px -> 调大至 24px */
+  font-size: 24px; 
+  font-weight: bold; 
+  color: #409EFF; 
+}
+
+.toolbar { 
+  display: flex; 
+  gap: 12px; 
+  margin-bottom: 20px; 
+}
+
+.detail-content {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 6px;
+  max-height: 450px;
+  overflow-y: auto;
+  border: 1px solid #ebeef5;
+  /* 新增：确保内容区域文字也变大 */
+  font-size: 16px;
+}
+
+.detail-content pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  line-height: 1.6;
+  margin: 0;
+  font-family: inherit;
+  /* 新增：确保预格式化文本也跟随变大 */
+  font-size: 16px;
+}
+</style>

@@ -1,0 +1,29 @@
+[project]
+name = "debate-mfxb2"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "dotenv>=0.9.9",
+    "langchain>=1.2.6",
+    "langchain-core>=1.2.7",
+    "langchain-openai>=1.1.7",
+    "langgraph>=1.0.6",
+    "langgraph-api>=0.7.2",
+    "langgraph-cli>=0.4.11",
+    "fastapi>=0.109.0",
+    "uvicorn[standard]>=0.27.0",
+    "websockets>=12.0",
+    "pydantic-settings>=2.1.0",
+    # ==================== 新增依赖：数据库和存储 ====================
+    # Docker 配置说明：
+    # 1. 启动 Docker 服务：docker-compose up -d
+    # 2. 确保 PostgreSQL (localhost:5432) 和 MinIO (localhost:9000) 已启动
+    # ================================================================
+    "sqlalchemy>=2.0.0",              # 数据库 ORM
+    "asyncpg>=0.29.0",                # PostgreSQL 异步驱动
+    "alembic>=1.13.0",                # 数据库迁移工具
+    "minio>=7.2.0",                   # MinIO 对象存储客户端
+    "python-multipart>=0.0.6",        # 文件上传支持
+]
