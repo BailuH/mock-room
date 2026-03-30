@@ -28,7 +28,7 @@ class MinIOService:
     """
 
     def __init__(self):
-        """初始化 MinIO 客户端。"""
+        """初始化 MinIO 客户端，并确保 bucket 存在。"""
         self.client = Minio(
             settings.minio_endpoint,
             access_key=settings.minio_access_key,
@@ -36,6 +36,19 @@ class MinIOService:
             secure=settings.minio_secure,
         )
         self.bucket = settings.minio_bucket
+        self._ensure_bucket_exists()
+
+    def _ensure_bucket_exists(self):
+        """确保 MinIO bucket 存在，不存在则自动创建。"""
+        try:
+            if not self.client.bucket_exists(self.bucket):
+                self.client.make_bucket(self.bucket)
+                print(f"[MinIO] Bucket '{self.bucket}' 创建成功")
+            else:
+                print(f"[MinIO] Bucket '{self.bucket}' 已存在")
+        except Exception as e:
+            print(f"[MinIO] Bucket 检查/创建失败: {e}")
+            # 不抛出异常，让后续操作决定是否需要报错
 
     async def get_upload_url(self, username: str, case_name: str, file_name: str) -> Dict[str, str]:
         """获取文件上传预签名 URL。

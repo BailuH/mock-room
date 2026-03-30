@@ -175,6 +175,16 @@ const ChatArea: React.FC<ChatAreaProps> = ({
 
     return (
         <div className="flex-1 flex flex-col bg-surface-container-lowest min-w-0 md:min-w-[400px] relative rounded-t-3xl overflow-hidden mt-2 mx-2 shadow-sm border border-outline-variant/10">
+            {/* 法庭背景图片 */}
+            <div
+                className="absolute inset-0 z-0 pointer-events-none"
+                style={{
+                    backgroundImage: 'url(/court.jpg)',
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    opacity: 0.15
+                }}
+            />
             {/* 页眉 */}
             <div className="h-16 flex items-center justify-between px-6 z-20 sticky top-0 border-b-0 rounded-t-[32px] backdrop-blur-md bg-surface-container-lowest/80 border border-white/10">
                 <div className="flex items-center gap-4">
@@ -227,10 +237,13 @@ const ChatArea: React.FC<ChatAreaProps> = ({
             </div>
 
             {/* 消息列表 - 使用过滤后的消息 */}
-            <MessageList messages={filteredMessages} roleFilter="all" />
+            <div className="relative z-10 flex-1 overflow-hidden">
+                <MessageList messages={filteredMessages} roleFilter="all" />
+            </div>
 
             {/* 消息输入 - 多态组件 */}
-            <MessageInput
+            <div className="relative z-10">
+                <MessageInput
                 inputValue={inputValue}
                 onInputChange={onInputChange}
                 onSendMessage={onSendMessage}
@@ -242,6 +255,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
                 currentPhase={currentPhase}
                 isConnected={isConnected}
             />
+            </div>
 
             {/* 证据选择浮动窗口 */}
             <EvidenceWindow

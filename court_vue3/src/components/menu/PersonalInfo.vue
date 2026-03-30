@@ -221,34 +221,39 @@ const applyCrop = () => {
 };
 </script>
 
+
 <style scoped>
-/* ========== 全局背景与容器 ========== */
+/* ========== 全局背景与容器 (法庭质感) ========== */
 .page-container {
-  --text-main: #1d1d1f;
-  --text-dim: #86868b;
-  --accent: #0071e3;
-  --card-bg: rgba(255, 255, 255, 0.85);
-  --border-subtle: rgba(0, 0, 0, 0.08);
+  /* 定义全局法庭配色变量 */
+  --text-main: #3E2723;      /* 深胡桃木棕 */
+  --text-dim: #795548;       /* 灰褐色 */
+  --accent: #8D6E63;         /* 黄铜金/典雅棕 */
+  --card-bg: rgba(255, 255, 252, 0.95); /* 暖白纸色 */
+  --border-subtle: #D7CCC8;  /* 浅棕边框 */
+  --bg-color: #F8F7F2;       /* 极浅暖灰背景 */
 
   min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: #f2f2f7;
+  background-color: var(--bg-color);
   position: relative;
   overflow: hidden;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  /* 字体优化：增加衬线体感知或极致严谨的黑体 */
+  font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
 }
 
+/* 装饰性模糊圈：改为沉稳的深棕色调，增加高级感 */
 .bg-blur-circle {
   position: absolute;
-  filter: blur(80px);
+  filter: blur(100px);
   z-index: 0;
   border-radius: 50%;
-  opacity: 0.15;
+  opacity: 0.1;
 }
-.circle-1 { width: 400px; height: 400px; background: #0071e3; top: -100px; right: -50px; }
-.circle-2 { width: 300px; height: 300px; background: #a855f7; bottom: -50px; left: -50px; }
+.circle-1 { width: 500px; height: 500px; background: #5D4037; top: -150px; right: -80px; }
+.circle-2 { width: 400px; height: 400px; background: #D7CCC8; bottom: -100px; left: -80px; }
 
 /* ========== 主卡片设计 ========== */
 .main-card {
@@ -257,20 +262,29 @@ const applyCrop = () => {
   background: var(--card-bg);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-radius: 24px;
+  border-radius: 12px; /* 减小圆角，更显严谨方正 */
   border: 1px solid var(--border-subtle);
   z-index: 1;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.05);
-  transform: translateY(-60px);
+  box-shadow: 0 20px 60px rgba(62, 39, 35, 0.1);
+  transform: translateY(-20px);
 }
 
+/* Tabs 标签页颜色调整 */
+.profile-tabs :deep(.el-tabs__item.is-active) {
+  color: var(--accent);
+}
+.profile-tabs :deep(.el-tabs__active-bar) {
+  background-color: var(--accent);
+}
 .profile-tabs :deep(.el-tabs__header) {
   margin: 0;
   padding: 20px 40px 0;
+  border-bottom: 1px solid var(--border-subtle);
 }
 .profile-tabs :deep(.el-tabs__nav-wrap::after) { display: none; }
 
 .pane-content { padding: 40px; }
+
 /* ========== 个人资料布局 ========== */
 .profile-layout {
   display: flex;
@@ -285,21 +299,24 @@ const applyCrop = () => {
 .avatar-upload-box {
   width: 160px;
   height: 160px;
-  border-radius: 38px;
+  border-radius: 8px; /* 方形头像或微圆角，更有证件照的正式感 */
   overflow: hidden;
   position: relative;
   cursor: pointer;
   background: #fff;
-  border: 1px solid var(--border-subtle);
-  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  border: 2px solid var(--border-subtle);
+  transition: all 0.3s ease;
 }
-.avatar-upload-box:hover { transform: scale(1.02); }
+.avatar-upload-box:hover { 
+  transform: translateY(-2px); 
+  border-color: var(--accent);
+}
 .avatar-upload-box img { width: 100%; height: 100%; object-fit: cover; }
 
 .upload-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(62, 39, 35, 0.6); /* 遮罩改用深棕色 */
   color: #fff;
   display: flex;
   flex-direction: column;
@@ -307,28 +324,31 @@ const applyCrop = () => {
   justify-content: center;
   opacity: 0;
   transition: opacity 0.3s;
-  font-size: 15px; /* 原13px -> 调大至15px */
+  font-size: 15px;
 }
 .avatar-upload-box:hover .upload-overlay { opacity: 1; }
 
 .hint-text { 
-  font-size: 14px; /* 原12px -> 调大至14px */
+  font-size: 14px;
   color: var(--text-dim); 
   margin-top: 15px; 
-  line-height: 1.5; /* 微调行高以适应大字体 */
+  line-height: 1.5;
 }
 
 .form-column { flex: 1; }
 .form-column :deep(.el-form-item__label) {
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-main);
-  font-size: 16px; /* 原14px -> 调大至16px */
+  font-size: 16px;
 }
 .form-column :deep(.el-input__wrapper) {
-  border-radius: 12px;
-  background-color: rgba(255, 255, 255, 0.6);
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08) inset;
-  font-size: 16px; /* 新增：确保输入框文字也同步变大 */
+  border-radius: 4px; /* 统一更严谨的小圆角 */
+  background-color: #fff;
+  box-shadow: 0 0 0 1px #D7CCC8 inset;
+  font-size: 16px;
+}
+.form-column :deep(.el-input__wrapper.is-focus) {
+  box-shadow: 0 0 0 1px var(--accent) inset !important;
 }
 
 .action-footer {
@@ -337,67 +357,81 @@ const applyCrop = () => {
   gap: 12px;
 }
 .btn-save { 
-  padding: 12px 30px; 
-  border-radius: 12px; 
+  padding: 12px 35px; 
+  border-radius: 4px; 
   font-weight: 600; 
-  background: var(--text-main); 
+  background: var(--text-main) !important; 
   border: none; 
-  font-size: 16px; /* 新增：按钮文字调大 */
+  font-size: 16px;
+  color: #fff;
 }
+.btn-save:hover { opacity: 0.9; }
+
 .btn-reset { 
-  border-radius: 12px; 
-  font-size: 16px; /* 新增：按钮文字调大 */
+  border-radius: 4px; 
+  font-size: 16px;
+  border-color: var(--border-subtle);
+  color: var(--text-dim);
 }
 
 /* ========== 安全设置布局 ========== */
 .security-layout { max-width: 600px; }
 .security-card {
-  background: rgba(255, 255, 255, 0.5);
-  border-radius: 16px;
+  background: #FDFBF9; /* 极淡的纸色背景 */
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
   padding: 24px;
   margin-bottom: 30px;
 }
 .sec-header { display: flex; justify-content: space-between; margin-bottom: 12px; align-items: center; }
 .sec-label { 
-  font-weight: 600; 
-  font-size: 18px; /* 原15px -> 调大至18px */
+  font-weight: 700; 
+  font-size: 18px;
+  color: var(--text-main);
 }
 .sec-status { 
-  font-size: 14px; /* 原12px -> 调大至14px */
-  padding: 4px 14px; /* 微调内边距适应字体 */
-  border-radius: 20px; 
+  font-size: 14px;
+  padding: 4px 14px;
+  border-radius: 4px; /* 状态标签也改用方圆角 */
   font-weight: 700; 
 }
-.sec-status.success { background: #e3f9eb; color: #10b981; }
-.sec-status.warning { background: #fff5e6; color: #f59e0b; }
+/* 状态色调整：降低饱和度，显得更高级 */
+.sec-status.success { background: #E8F5E9; color: #2E7D32; }
+.sec-status.warning { background: #FFF3E0; color: #EF6C00; }
 
 .sec-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 22px 0; /* 微调间距 */
+  padding: 22px 0;
   border-bottom: 1px solid var(--border-subtle);
 }
+.sec-item:last-child { border-bottom: none; }
+
 .sec-info h4 { 
   margin: 0 0 6px; 
-  font-size: 17px; /* 原15px -> 调大至17px */
+  font-size: 17px;
   color: var(--text-main); 
 }
 .sec-info p { 
   margin: 0; 
-  font-size: 14px; /* 原13px -> 调大至14px */
+  font-size: 14px;
   color: var(--text-dim); 
 }
 
-/* ========== 裁剪弹窗样式 ========== */
+/* ========== 裁剪弹窗样式 (强调色统一) ========== */
 .cropper-wrapper { display: flex; flex-direction: column; align-items: center; }
-.canvas-box { position: relative; border-radius: 12px; overflow: hidden; background: #f0f0f0; border: 1px solid #ddd; }
+.canvas-box { position: relative; border-radius: 8px; overflow: hidden; background: #EFEBE9; border: 1px solid var(--border-subtle); }
 .crop-frame {
   position: absolute;
   border: 2px solid var(--accent);
-  border-radius: 20px;
-  box-shadow: 0 0 0 1000px rgba(0, 0, 0, 0.4);
+  border-radius: 8px;
+  box-shadow: 0 0 0 1000px rgba(62, 39, 35, 0.4); /* 阴影也使用深棕色 */
   cursor: move;
 }
+/* 滑块颜色覆盖 */
+:deep(.el-slider__bar) { background-color: var(--accent); }
+:deep(.el-slider__button) { border-color: var(--accent); }
+
 .zoom-slider { display: flex; align-items: center; width: 80%; gap: 15px; margin-top: 25px; }
 </style>

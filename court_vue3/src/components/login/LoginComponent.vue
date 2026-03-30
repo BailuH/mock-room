@@ -25,7 +25,7 @@
     <div class="login-card-container">
       <el-card class="glass-card" shadow="always">
         <div class="form-header">
-          <h1 class="main-title">数字法庭演示平台</h1>
+          <h1 class="main-title">模谷数字法庭平台</h1>
           <p class="en-subtitle">DIGITAL COURT PLATFORM</p>
         </div>
 
@@ -129,7 +129,7 @@ const handleLogin = async () => {
   
   try {
     // 1. 发送请求
-    const res = await axios.post(baseURL + '/api/login', {
+    const res = await axios.post(baseURL + '/api/v1/auth/register', {
       type: 'login',
       phone: loginForm.name,
       password: loginForm.password
@@ -176,7 +176,7 @@ const handleLogin = async () => {
 
 const handleRegister = async () => {
   try {
-    const res = await axios.post(baseURL + '/api/login', {
+    const res = await axios.post(baseURL + '/api/v1/auth/register', {
       type: 'register',
       phone: registerForm.name,
       password: registerForm.password
@@ -205,12 +205,15 @@ const handleRegister = async () => {
 </script>
 
 <style scoped>
+/* 引入衬线体增强法律文书的正式感 */
 .login-wrapper {
   position: relative;
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", Arial, sans-serif;
+  /* 优先使用宋体/衬线体展现权威感 */
+  font-family: "Optima", "Source Han Serif SC", "Songti SC", "SimSun", serif;
+  background-color: #2c1e1a; /* 深棕背景基调 */
 }
 
 /* --- 背景轮播优化 --- */
@@ -229,27 +232,30 @@ const handleRegister = async () => {
   display: flex;
   align-items: center;
   padding-left: 8%;
+  /* 添加一个微弱的深色遮罩，让白色文字更清晰 */
+  background-image: linear-gradient(to right, rgba(0,0,0,0.4) 0%, transparent 60%);
 }
 
 .bg-content-box {
   color: #fff;
-  max-width: 600px;
+  max-width: 650px;
 }
 
 .hero-title {
-  font-size: 3.5rem; /* 更大的标题 */
+  font-size: 3.5rem;
   font-weight: 800;
   letter-spacing: 4px;
   margin-bottom: 15px;
-  text-shadow: 0 5px 15px rgba(0,0,0,0.5);
+  text-shadow: 0 5px 15px rgba(0,0,0,0.6);
 }
 
 .hero-divider {
   width: 80px;
   height: 6px;
-  background: #409eff;
+  background: #a67c52; /* 典雅古铜金 */
   margin-bottom: 25px;
   border-radius: 3px;
+  box-shadow: 0 2px 10px rgba(166, 124, 82, 0.4);
 }
 
 .hero-subtitle {
@@ -260,34 +266,32 @@ const handleRegister = async () => {
   font-weight: 300;
 }
 
-/* --- 悬浮卡片美化 --- */
+/* --- 悬浮卡片：调整为温暖的羊皮纸/毛玻璃质感 --- */
 .login-card-container {
   position: absolute;
   top: 50%;
   right: 8%;
   transform: translateY(-50%);
   z-index: 10;
-  width: 480px; /* 增加宽度 */
+  width: 480px;
 }
 
 .glass-card {
-  /* 1. 调整透明度：0.88 这是一个兼顾透明感与文字清晰度的黄金比例 */
-  background: rgba(255, 255, 255, 0.48) !important;
+  /* 暖白色背景，模拟高级办公环境 */
+  background: rgba(255, 253, 250, 0.85) !important; 
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
   
-  /* 2. 调整模糊度：20px 增加毛玻璃质感 */
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  /* 极细的古铜色边框 */
+  border: 1px solid rgba(166, 124, 82, 0.3) !important;
   
-  /* 3. 边框细节：添加一圈极细的白色半透明边框，能让卡片轮廓更对齐、更精致 */
-  border: 1px solid rgba(255, 255, 255, 0.4) !important;
-  
-  /* 4. 内阴影：增加一点向内的微光，提升层次感 */
+  /* 深沉的投影，增加厚重感 */
   box-shadow: 
-    0 25px 50px -12px rgba(0, 0, 0, 0.25),
-    inset 0 0 20px rgba(255, 255, 255, 0.5) !important;
+    0 30px 60px -12px rgba(0, 0, 0, 0.45),
+    inset 0 0 30px rgba(255, 255, 255, 0.6) !important;
     
-  border-radius: 24px;
-  padding: 40px 30px; /* 增加内边距，让内容更对齐、不拥挤 */
+  border-radius: 20px; /* 略微减小圆角，显得更严谨 */
+  padding: 40px 35px;
 }
 
 .form-header {
@@ -296,37 +300,52 @@ const handleRegister = async () => {
 }
 
 .main-title {
-  font-size: 2rem;
+  font-size: 2.1rem;
   font-weight: 700;
-  color: #1a1a1a;
-  letter-spacing: 2px;
+  color: #3e2723; /* 深胡桃木棕 */
+  letter-spacing: 3px;
   margin-bottom: 8px;
 }
 
 .en-subtitle {
-  font-size: 0.85rem;
-  color: #1a1a1a;
-  letter-spacing: 4px;
+  font-size: 0.8rem;
+  color: #8d6e63; /* 中调棕色 */
+  letter-spacing: 5px;
   font-weight: bold;
+  text-transform: uppercase;
 }
 
-/* --- 表单控件调整 --- */
+/* --- 表单控件：Element Plus 深度样式定制 --- */
 .large-tabs :deep(.el-tabs__item) {
-  font-size: 1.2rem; /* 增大 Tab 字号 */
+  font-size: 1.15rem;
   height: 60px;
   font-weight: 600;
+  color: #8d6e63;
+}
+
+/* 激活状态切换为棕色 */
+.large-tabs :deep(.el-tabs__item.is-active) {
+  color: #5d4037 !important;
+}
+.large-tabs :deep(.el-tabs__active-bar) {
+  background-color: #a67c52 !important;
 }
 
 .login-form :deep(.el-form-item__label) {
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 600;
-  color: #444;
-  padding-bottom: 8px;
+  color: #4e342e;
 }
 
 .login-form :deep(.el-input__inner) {
   height: 50px;
   font-size: 1.1rem;
+  border-color: #d7ccc8;
+  background-color: rgba(255, 255, 255, 0.5);
+}
+
+.login-form :deep(.el-input__inner:focus) {
+  border-color: #a67c52; /* 输入框聚焦也使用金棕色 */
 }
 
 .form-options {
@@ -337,44 +356,71 @@ const handleRegister = async () => {
 }
 
 .large-checkbox :deep(.el-checkbox__label) {
-  font-size: 1rem;
+  font-size: 0.95rem;
+  color: #5d4037;
+}
+
+.large-checkbox :deep(.el-checkbox__input.is-checked .el-checkbox__inner) {
+  background-color: #a67c52;
+  border-color: #a67c52;
 }
 
 .forget-link {
-  font-size: 1rem;
+  font-size: 0.95rem;
+  color: #8d6e63;
+  transition: color 0.3s;
 }
 
-/* --- 按钮美化 --- */
+.forget-link:hover {
+  color: #a67c52;
+}
+
+/* --- 按钮：由蓝变棕金渐变 --- */
 .gradient-btn {
   width: 100%;
   height: 55px;
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   font-weight: 600;
-  letter-spacing: 2px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, #409eff 0%, #1e40af 100%);
+  letter-spacing: 3px;
+  border-radius: 12px;
+  /* 深棕到古铜的渐变，更有金属感和木质感 */
+  background: linear-gradient(135deg, #5d4037 0%, #3e2723 100%);
   border: none;
+  color: #f5f5f5;
   transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(62, 39, 35, 0.3);
 }
 
 .gradient-btn:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 10px 20px rgba(30, 64, 175, 0.3);
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, #795548 0%, #5d4037 100%);
+  box-shadow: 0 8px 20px rgba(62, 39, 35, 0.4);
 }
 
 .register-btn {
   width: 100%;
   height: 55px;
-  border-radius: 14px;
-  font-size: 1.1rem;
+  border-radius: 12px;
+  font-size: 1rem;
+  border: 1.5px solid #5d4037 !important;
+  color: #5d4037 !important;
+  font-weight: 600;
+}
+
+.register-btn:hover {
+  background-color: rgba(93, 64, 55, 0.05) !important;
+  border-color: #a67c52 !important;
+  color: #a67c52 !important;
 }
 
 .form-footer {
   margin-top: 35px;
   text-align: center;
-  font-size: 0.95rem;
-  color: #1a1a1a;
+  font-size: 0.9rem;
+  color: #5d4037;
   font-weight: 500;
+  border-top: 1px solid rgba(141, 110, 99, 0.2);
+  padding-top: 20px;
 }
 
 /* --- 响应式 --- */

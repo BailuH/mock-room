@@ -31,7 +31,7 @@ class Settings(BaseSettings):
     # Console: http://localhost:9001 (用户名: minioadmin, 密码: minio123)
     # 需要先在 MinIO 中创建名为 "court-cases" 的桶
     # ===========================================================================
-    minio_endpoint: str = "localhost:9000"
+    minio_endpoint: str = "localhost:9002"
     minio_access_key: str = "minioadmin"
     minio_secret_key: str = "minio123"
     minio_bucket: str = "court-cases"

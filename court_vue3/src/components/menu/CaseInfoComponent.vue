@@ -16,6 +16,7 @@
         />
         </el-select>
         <el-button type="primary" @click="caseDialogVisible = true">新建案件</el-button>
+        <el-button type="primary" @click="handleCaseMaterials" disabled>处理案件材料</el-button>
         <el-button type="danger" :disabled="!currentCase" @click="handleDeleteCase">删除当前案件</el-button>
       </div>
 
@@ -110,8 +111,8 @@ import { storeToRefs } from 'pinia'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import Tesseract from 'tesseract.js'
 import { useCaseStore } from '@/tools/useCaseStore'
+import { loginStore} from '@/tools/Storage'
 import axios from 'axios'
-import { loginStore } from '@/tools/Storage'
 import { baseURL } from '@/config'
 //const baseURL = 'http://localhost:8081'
 
@@ -120,6 +121,7 @@ import { baseURL } from '@/config'
 const store = useCaseStore()
 const { cases, currentCaseId, currentCase } = storeToRefs(store)
 const userStore = loginStore()
+
 
 /* 状态控制 */
 const caseDialogVisible = ref(false)
@@ -371,6 +373,41 @@ const formatSize = (row, col, val) => {
   const i = Math.floor(Math.log(val) / Math.log(1024))
   return (val / Math.pow(1024, i)).toFixed(1) + ' ' + units[i]
 }
+
+ //案件材料处理功能
+ const handleCaseMaterials = async() => {
+    //1.确认弹窗
+    await ElMessageBox.confirm(
+      '确定开始处理该案件材料吗？','（将生成模拟法庭所需数据）' ,
+      {
+        type: 'warning',
+        confirmButtonText: '确定',
+        cancelButtonText: '取消'
+      }
+    );
+    if (!currentCase.value.files.length) return ElMessage.warning('没有可处理的文件')
+
+    ocrLoading.value = true;
+    //2.调用后台的接口进行处理
+    //2.1 需要向后台发送的数据
+    const data = {
+          case_id: currentCaseId.value,
+          filePaths: currentCase.value.files.map(file => file.path)
+        }
+    //2.2 调用后台接口
+    try {
+      const res = await axios.post(`${baseURL}/api/cases/materials`, data)
+      if (res.data.code === 200) {
+        return ElMessage.success('材料处理成功')
+      }
+    }catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('处理失败：' + (error.response?.data?.detail || '网络异常'));
+    }
+  } finally {
+    ocrLoading.value = false;
+  }
+ } 
 
 
 </script>

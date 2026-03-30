@@ -5,9 +5,9 @@ from langchain_core.messages import HumanMessage, AIMessage
 from langgraph.types import Command
 from langgraph.checkpoint.memory import MemorySaver
 
-from src.test import raw_graph
+from src.court_flow import raw_graph
 from src.state import CourtState, case_info, Evidence, PhaseEnum, Evidence_Show_Enum
-from src.api.schemas import (
+from src.api.websocket_schemas import (
     InterruptRequestData,
     NodeExecutedData,
     TrialCompletedData,

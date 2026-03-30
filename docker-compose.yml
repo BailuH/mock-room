@@ -28,7 +28,7 @@ services:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minio123
     ports:
-      - "9000:9000"   # API 端口
+      - "9002:9000"   # API 端口（改为9002，避免与Hadoop冲突）
       - "9001:9001"   # Console 端口（管理界面）
     volumes:
       - minio_data:/data

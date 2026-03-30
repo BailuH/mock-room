@@ -27,6 +27,7 @@ from src.api.business.auth import router as auth_router
 from src.api.business.cases import router as cases_router
 from src.api.business.files import router as files_router, user_info_router
 from src.api.business.storage import router as storage_router
+from src.api.business.materials import router as materials_router
 # ================================================================
 
 logging.basicConfig(
@@ -107,6 +108,9 @@ app.include_router(user_info_router)
 
 # MinIO 存储路由
 app.include_router(storage_router)
+
+# 案件材料生成路由
+app.include_router(materials_router)
 # ================================================================
 
 

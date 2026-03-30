@@ -40,6 +40,7 @@ class CaseModel(Base):
     people = Column(Text, comment="涉案人员")
     description = Column(Text, comment="案件描述")
     ocr_history = Column(JSON, default=list, comment="OCR识别历史")
+    case_material = Column(JSON, default=dict, comment="案件材料（大模型生成）")
 
     # 关系：一个案件可以有多个文件
     files = relationship("FileModel", back_populates="case", cascade="all, delete-orphan")
