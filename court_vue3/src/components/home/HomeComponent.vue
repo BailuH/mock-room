@@ -2,7 +2,8 @@
   <el-container :id="containerId" class="layout-container">
     <el-header class="modern-header" :style="{ top: headerVisible ? '0' : '-62px' }" >
       <div id="header-title">
-        <h2>模谷数字模拟法庭平台</h2>
+        <img src="@/assets/模谷logo.png" class="logo-container" />
+        <h2>模谷</h2>
       </div>
       <el-avatar :size="40" :src="form.avatarUrl" style="margin-left:auto; margin-top: 5px;"></el-avatar>
       <div class="user-welcome">欢迎您：{{ form.username }}</div>
@@ -98,7 +99,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed} from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import { loginStore } from '@/tools/Storage';
@@ -153,6 +154,8 @@ const handleMenuSelect = (index) => {
   }
   router.push({ path: index });
 };
+
+
 </script>
 
 
@@ -192,13 +195,37 @@ const handleMenuSelect = (index) => {
   transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-#header-title h2 {
-  color: #d7ccc8; /* 浅米棕色文字 */
-  font-weight: 700;
-  letter-spacing: 2px;
-  margin: 0;
+/* 包含 Logo 和 标题的容器 */
+#header-title {
+  display: flex;
+  align-items: center; /* 确保图片和文字在水平线上垂直居中对齐 */
+  gap: 12px;           /* Logo 和文字之间的间距 */
 }
 
+/* 针对 Logo 图片的布局调整 */
+.logo-container {
+  height: 45px;        /* 限制图片高度，防止占据大部分屏幕 */
+  width: auto;         /* 保持图片原始比例 */
+  display: block;      /* 消除图片底部的微小空隙 */
+  object-fit: contain; /* 确保图片在缩放时不被拉伸 */
+}
+
+/* 标题文字样式 */
+#header-title h2 {
+  color: #d7ccc8;      /* 浅米棕色文字 */
+  font-weight: 700;
+  letter-spacing: 2px;
+  margin: 0;           /* 清除默认外边距，防止顶破行高 */
+  font-size: 1.6rem;   /* 调整文字大小 */
+  line-height: 1;      /* 确保文字不会产生额外的上下间距 */
+  white-space: nowrap; /* 强制文字不换行 */
+}
+
+.logo-container{
+  width: 50px;
+  height: 50px;
+  margin-right: 5px;
+}
 .user-welcome {
   margin-left: 15px;
   color: #bcaaa4; /* 柔和的次要文字色 */
@@ -211,6 +238,7 @@ const handleMenuSelect = (index) => {
   border-color: #5d4037 !important;
   color: #fcfaf7 !important;
 }
+
 
 /* Header 内部的收起触发器 */
 .collapse-btn {

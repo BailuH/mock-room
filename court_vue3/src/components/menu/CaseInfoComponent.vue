@@ -1,6 +1,7 @@
 <template>
   <div class="page">
     <el-card class="card" shadow="hover">
+      <img src="@/assets/模谷趴logo.png" class="peeking-doll" alt="公仔" />
       <template #header>
         <div class="header">案件材料管理</div>
       </template>
@@ -412,53 +413,163 @@ const formatSize = (row, col, val) => {
 
 </script>
 <style scoped>
+/* ========== 1. 页面基础容器 (法庭纸张感) ========== */
 .page { 
   padding: 30px; 
-  background: #f5f7fa; 
+  background: #fcfaf7; 
   min-height: 100vh; 
   display: flex; 
   justify-content: center; 
   border-radius: 10px;
-  /* 新增：提升页面基础字号 */
   font-size: 16px;
+  font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
 }
 
+/* ========== 2. 核心卡片样式 ========== */
 .card { 
   width: 1000px; 
-  border-radius: 12px; 
+  background: #ffffff;
+  border-radius: 8px;
+  border: 1px solid #d7ccc8;
+  box-shadow: 0 10px 30px rgba(62, 39, 35, 0.05) !important;
+  position: relative;
+  overflow: visible !important;
 }
 
 .header { 
-  /* 原 20px -> 调大至 24px */
   font-size: 24px; 
   font-weight: bold; 
-  color: #409EFF; 
+  color: #3e2723; 
+  letter-spacing: 1px;
 }
 
+/* 2. 公仔图片的定位样式 */
+.peeking-doll {
+  position: absolute;
+  top: -45px;    /* 向上偏移，让它看起来趴在边框上 */
+  right: 1px;
+  width: 170px;   /* 根据公仔图片大小调整 */
+  height: auto;
+  z-index: 100;  /* 确保在所有内容之上 */
+  pointer-events: none; /* 让鼠标可以透过公仔点击下方的按钮 */
+  
+  /* 可选：增加一点自然的倾斜效果 */
+  transform: rotate(5deg);
+  transition: all 0.3s ease;
+}
+
+.card:hover .peeking-doll {
+  transform: rotate(0deg) scale(1.1);
+}
+
+/* ========== 3. 工具栏与功能按钮 ========== */
 .toolbar { 
   display: flex; 
   gap: 12px; 
   margin-bottom: 20px; 
 }
 
+/* 顶部主按钮保持实色以示区分 */
+:deep(.el-button--primary) {
+  background-color: #8d6e63 !important;
+  border-color: #795548 !important;
+}
+:deep(.el-button--danger) {
+  background-color: #a64452 !important;
+  border-color: #82343f !important;
+}
+
+/* ========== 4. 去除颜色后的“预览”与“删除”按钮 (文字链接风格) ========== */
+
+/* 统一重置链接按钮，去掉默认蓝色/红色的背景块 */
+:deep(.el-button.is-link) {
+  padding: 0 8px;
+  height: auto;
+  font-weight: 500;
+  background: transparent !important;
+  border: none !important;
+}
+
+/* 预览按钮：改为深灰文字，悬停时加重 */
+:deep(.el-button--primary.is-link) {
+  color: #5d4037 !important; /* 使用深木色文字代替蓝色 */
+}
+:deep(.el-button--primary.is-link:hover) {
+  color: #3e2723 !important;
+  text-decoration: underline;
+}
+
+/* 删除按钮：改为浅灰红文字，悬停时变深红 */
+:deep(.el-button--danger.is-link) {
+  color: #909399 !important; /* 平时显示为中性灰色，降低视觉压迫感 */
+}
+:deep(.el-button--danger.is-link:hover) {
+  color: #a64452 !important; /* 悬停时恢复警示红 */
+  text-decoration: underline;
+}
+
+/* ========== 5. 信息展示与表格优化 ========== */
+:deep(.el-descriptions__label) {
+  background-color: #fdfbf9 !important;
+  color: #795548 !important;
+  font-weight: 600;
+}
+
+:deep(.el-table) {
+  --el-table-border-color: #f0ece9;
+  --el-table-header-bg-color: #fdfbf9;
+  color: #3e2723;
+}
+
+:deep(.el-table__header th) {
+  color: #5d4037;
+  font-weight: 700;
+}
+
+/* 分割线 */
+:deep(.el-divider__text) {
+  background-color: #ffffff;
+  color: #8d6e63;
+  font-weight: bold;
+}
+
+/* ========== 6. 内容详情与 OCR 区 ========== */
 .detail-content {
-  background: #f8f9fa;
-  padding: 20px;
-  border-radius: 6px;
+  background: #fdfbf9;
+  padding: 25px;
+  border-radius: 4px;
   max-height: 450px;
   overflow-y: auto;
-  border: 1px solid #ebeef5;
-  /* 新增：确保内容区域文字也变大 */
+  border: 1px solid #e0d7d3;
   font-size: 16px;
+  color: #3e2723;
+}
+
+.detail-content::-webkit-scrollbar {
+  width: 6px;
+}
+.detail-content::-webkit-scrollbar-thumb {
+  background: #d7ccc8;
+  border-radius: 10px;
 }
 
 .detail-content pre {
   white-space: pre-wrap;
   word-wrap: break-word;
-  line-height: 1.6;
+  line-height: 1.8;
   margin: 0;
   font-family: inherit;
-  /* 新增：确保预格式化文本也跟随变大 */
-  font-size: 16px;
+}
+
+/* ========== 7. 上传与进度条 ========== */
+:deep(.el-upload-dragger) {
+  background-color: #fdfbf9;
+  border: 2px dashed #d7ccc8;
+}
+:deep(.el-upload-dragger:hover) { border-color: #8d6e63; }
+:deep(.el-upload__text em) { color: #8d6e63; }
+
+:deep(.el-progress-bar__inner) {
+  background-color: #8d6e63 !important;
 }
 </style>

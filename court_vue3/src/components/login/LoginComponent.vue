@@ -129,7 +129,7 @@ const handleLogin = async () => {
   
   try {
     // 1. 发送请求
-    const res = await axios.post(baseURL + '/api/v1/auth/register', {
+    const res = await axios.post(baseURL + '/api/login', {
       type: 'login',
       phone: loginForm.name,
       password: loginForm.password
@@ -176,7 +176,7 @@ const handleLogin = async () => {
 
 const handleRegister = async () => {
   try {
-    const res = await axios.post(baseURL + '/api/v1/auth/register', {
+    const res = await axios.post(baseURL + '/api/login', {
       type: 'register',
       phone: registerForm.name,
       password: registerForm.password
