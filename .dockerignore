@@ -1,0 +1,23 @@
+# VCS / 编辑器
+.git
+**/.git
+**/.claude
+**/.langgraph_api
+
+# 依赖目录（镜像内重新安装）
+**/node_modules
+**/.venv
+
+# 构建产物（镜像内重新构建）
+court_vue3/dist
+mock-court/dist
+
+# Python 缓存
+**/__pycache__
+**/*.pyc
+
+# 日志与临时文件
+*.log
+.DS_Store
+
+# 注意: debate_mfxb2/.env 不打 Ignore，后端需要它作为默认配置

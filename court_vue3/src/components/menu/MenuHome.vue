@@ -236,7 +236,9 @@ const handleFunctionGo = (feature) => {
       return;
     }
     if(feature.path === '/court'){
-      window.location.href = "http://82.157.203.240:5173";
+      // 生产构建（Docker）下同域访问 /mock-court/，本地开发仍跳转 vite dev server
+      window.location.href = process.env.NODE_ENV === "production" ? "/mock-court/" : "http://localhost:5173";
+      return;
     }
     router.push(feature.path)
   } else {

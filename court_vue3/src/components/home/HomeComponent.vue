@@ -144,7 +144,8 @@ const handleMenuSelect = (index) => {
     //const caseId = caseStore.currentCaseId;
     //const params = new URLSearchParams({ id: caseId });
     //window.location.href = `http://localhost:5173?${params.toString()}`;
-    window.location.href = "http://localhost:5173";
+    // 生产构建（Docker）下同域访问 /mock-court/，本地开发仍跳转 vite dev server
+    window.location.href = process.env.NODE_ENV === "production" ? "/mock-court/" : "http://localhost:5173";
     return;
     //http://82.157.203.240:5173?${params.toString()}
   }

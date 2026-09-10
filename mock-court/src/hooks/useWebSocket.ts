@@ -40,7 +40,10 @@ export interface UseWebSocketReturn {
 // =============================================================================
 
 export function useWebSocket(): UseWebSocketReturn {
-    const clientRef = useRef<CourtClient>(new CourtClient());
+    // 生产构建（Docker/nginx 反代）下连当前站点同域的 /ws/trial；本地开发直连 localhost:8000
+    const clientRef = useRef<CourtClient>(
+        new CourtClient(import.meta.env.DEV ? 'localhost:8000' : window.location.host)
+    );
 
     /**
      * 建立 WebSocket 连接并开始庭审
