@@ -1,4 +1,6 @@
 #!/bin/bash
+# !! DEPRECATED !! 仅供 all-in-one Dockerfile 回滚使用。
+# 新部署：postgres/minio 是独立容器，无需 initdb；后端由 backend 容器直接 uvicorn 启动。
 # 一体化容器入口：初始化 PostgreSQL（仅首次），然后由 supervisord 统一管理所有服务
 set -e
 

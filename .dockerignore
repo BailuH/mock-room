@@ -1,8 +1,16 @@
+# ============================================================
+# 仓库根 .dockerignore
+#   主要服务于 frontend 镜像构建（context = 仓库根）
+#   backend 镜像的 context 是 ./debate_mfxb2，由 debate_mfxb2/.dockerignore 控制
+# ============================================================
+
 # VCS / 编辑器
 .git
 **/.git
 **/.claude
 **/.langgraph_api
+**/.vscode
+**/.idea
 
 # 依赖目录（镜像内重新安装）
 **/node_modules
@@ -20,4 +28,14 @@ mock-court/dist
 *.log
 .DS_Store
 
-# 注意: debate_mfxb2/.env 不打 Ignore，后端需要它作为默认配置
+# 文档 / 计划（不入镜像）
+PLAN.md
+START.md
+数字法庭开发设想.md
+
+# 后端运行时配置（不打入镜像，运行时由 compose env 注入）
+debate_mfxb2/.env
+debate_mfxb2/.env.example
+
+# mock-court 整个目录不进 frontend 镜像（Phase 1 后将整目录删除）
+mock-court

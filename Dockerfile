@@ -1,4 +1,15 @@
 # ============================================================
+# !! DEPRECATED !!  All-in-one 镜像（保留一个版本周期作回滚备份）
+# ------------------------------------------------------------
+# 新部署请使用 docker-compose.yml + docker/backend.Dockerfile +
+# docker/frontend.Dockerfile（前后端解耦，见 START.md）。
+#
+# 此文件合并了 nginx + PostgreSQL + MinIO + supervisord + FastAPI，
+# 前后端无法独立构建/发布/伸缩，且 .env 与密钥会被打入镜像。
+# 仅当新版 compose 出现阻断性问题时临时使用：
+#   docker build -t digital-court:all-in-one .
+# 计划在 Phase 1（React 删除）完成后彻底移除。
+# ============================================================
 # 基础镜像可通过构建参数覆盖，便于在网络受限环境使用镜像源：
 #   docker build \
 #     --build-arg NODE_IMAGE=docker.m.daocloud.io/library/node:20-bookworm-slim \

@@ -1,18 +1,36 @@
+# ============================================================
+# 数字法庭 docker-compose（前后端解耦版）
+#   - frontend: court_vue3 构建 + nginx 反代
+#   - backend : FastAPI only
+#   - postgres / minio: 独立基础设施服务
+# 一键启动：docker compose up -d --build
+# 端口约定（统一以 9000 为 MinIO API，消除旧版 9000/9002 不一致）：
+#   80   -> frontend (nginx)
+#   8000 -> backend  (FastAPI)
+#   5432 -> postgres
+#   9000 -> minio API
+#   9001 -> minio Console
+# ============================================================
+# 部署前准备：
+#   1. cp debate_mfxb2/.env.example debate_mfxb2/.env  并按需修改密钥
+#   2. docker compose up -d --build
+# ============================================================
+
 services:
   # ==================== PostgreSQL 数据库 ====================
   postgres:
     image: postgres:16-alpine
     container_name: court_db
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: court123
-      POSTGRES_DB: court_system
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-court123}
+      POSTGRES_DB: ${POSTGRES_DB:-court_system}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -25,11 +43,11 @@ services:
     container_name: court_storage
     command: server /data --console-address ":9001"
     environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minio123
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minio123}
     ports:
-      - "9002:9000"   # API 端口（改为9002，避免与Hadoop冲突）
-      - "9001:9001"   # Console 端口（管理界面）
+      - "9000:9000"   # API（统一为 9000，与 .env 默认值对齐）
+      - "9001:9001"   # Console
     volumes:
       - minio_data:/data
     healthcheck:
@@ -39,6 +57,54 @@ services:
       retries: 3
     networks:
       - court_network
+
+  # ==================== 后端 FastAPI ====================
+  backend:
+    build:
+      context: ./debate_mfxb2
+      dockerfile: ../docker/backend.Dockerfile
+    image: digital-court:backend
+    container_name: court_backend
+    env_file:
+      - ./debate_mfxb2/.env
+    environment:
+      # 容器网络拓扑：覆盖 .env 中可能残留的 localhost，确保容器内可连通
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-court123}@postgres:5432/${POSTGRES_DB:-court_system}
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minio123}
+      MINIO_BUCKET: ${MINIO_BUCKET:-court-cases}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    networks:
+      - court_network
+    # 开发期可解开下面挂载实现源码热重载（生产构建不要挂载）
+    # volumes:
+    #   - ./debate_mfxb2/src:/app/src:ro
+    # command: ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+  # ==================== 前端 (court_vue3) ====================
+  frontend:
+    build:
+      # context 必须为仓库根，便于 frontend.Dockerfile COPY docker/nginx.conf
+      context: .
+      dockerfile: docker/frontend.Dockerfile
+      args:
+        VUE_APP_API_BASE_URL: ""
+    image: digital-court:frontend
+    container_name: court_frontend
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+    networks:
+      - court_network
+    # 前端镜像纯静态，更新前端仅影响此容器，不触碰数据库/MinIO/后端
 
 volumes:
   postgres_data:

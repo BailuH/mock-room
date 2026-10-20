@@ -1,4 +1,6 @@
 #!/bin/bash
+# !! DEPRECATED !! 仅供 all-in-one Dockerfile 回滚使用。
+# 新部署：backend 镜像直接 CMD ["uvicorn", ...]，depends_on postgres.healthcondition 替代 poll。
 # 等待 PostgreSQL 就绪后再启动后端，确保自动建表成功
 set -e
 

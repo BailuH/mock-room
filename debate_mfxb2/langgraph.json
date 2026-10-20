@@ -1,7 +1,7 @@
 {
   "dependencies": ["."],
   "graphs": {
-    "agents": "./src/test.py:app"
+    "agents": "./src/court_flow.py:app"
   },
   "env": ".env"
 }

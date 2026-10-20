@@ -11,7 +11,10 @@ This is a **Digital Court (数字法庭)** - an AI-powered courtroom simulation 
 - **LangGraph** - Multi-agent orchestration and state management
 - **LangChain** - LLM integration framework
 - **FastAPI** - REST/WebSocket API backend
-- **Vue.js 3** + Tailwind CSS - Frontend (demo.html)
+- **SQLAlchemy 2.0 (asyncpg)** — PostgreSQL 异步 ORM
+- **MinIO** — 对象存储
+- ** court_vue3** (Vue 3 + Element Plus) - 主前端，独立镜像部署
+- **mock-court** (React 19 + Vite) - 庭审模拟页（Phase 1 后将被删除）
 - **DeepSeek-V3 / DeepSeek-R1 / KIMI-K2.5** - AI models via OpenAI-compatible API
 - **uv** - Package manager
 
@@ -46,18 +49,22 @@ debate_mfxb2/
 │   ├── api/              # FastAPI backend
 │   │   ├── main.py       # FastAPI application entry point
 │   │   ├── websocket.py  # WebSocket connection manager
-│   │   ├── session_manager.py  # Session management
-│   │   ├── graph_manager.py    # LangGraph execution manager
-│   │   ├── schemas.py    # Pydantic models for WebSocket messages
-│   │   └── config.py     # API configuration settings
+│   │   ├── websocket_schemas.py  # WebSocket message Pydantic 模型
+│   │   ├── session_manager.py    # Session management
+│   │   ├── graph_manager.py      # LangGraph execution manager
+│   │   ├── config.py     # API configuration settings
+│   │   ├── business/     # 业务 HTTP 路由（认证/案件/文件/存储/材料）
+│   │   └── models/       # SQLAlchemy 模型（base/case/user）
 │   ├── state.py          # State management and data models
-│   ├── test.py           # LangGraph workflow definition (46 nodes)
+│   ├── court_flow.py     # LangGraph workflow definition (46 节点)，导出 app / raw_graph
 │   ├── llmconfig.py      # LLM model configurations
 │   ├── llm_wrapper.py    # LLM call wrapper with retry logic
 │   └── prompt.py         # Agent prompt templates
-├── demo.html             # Vue.js frontend demo
-├── langgraph.json        # LangGraph configuration
-└── main.py               # Main entry point
+├── .env                  # 本地开发环境变量（gitignored，参见 .env.example）
+├── .env.example          # 环境变量模板（构建/部署用）
+├── langgraph.json        # LangGraph 配置，指向 src/court_flow.py:app
+├── pyproject.toml        # uv 管理的依赖
+└── uv.lock               # 锁定依赖版本
 ```
 
 ### Core Components
@@ -78,11 +85,12 @@ debate_mfxb2/
 - **Defendant** (`denfendant.py`): Responds to charges, presents defense, cross-examines
 - **Clerk** (`clerk.py`): Announces rules and procedures
 
-**LangGraph Workflow (`src/test.py`)**
+**LangGraph Workflow (`src/court_flow.py`)**
 - LangGraph StateGraph with 46 nodes
 - Conditional edges for dynamic routing based on trial state
 - Uses `Command` pattern for agent-driven navigation
 - Interrupt nodes for human interaction points
+- 导出 `app`（编译后，供 LangSmith 测试）与 `raw_graph`（未编译，供 API 用 MemorySaver 自行 compile）
 
 **API Backend (`src/api/`)**
 
@@ -115,7 +123,7 @@ debate_mfxb2/
   - `defense_evidence_control`: boolean
   - `defense_show_evidence`: dict (evidence)
 
-*`schemas.py` - Pydantic Models*
+*`websocket_schemas.py` - Pydantic Models*
 - `MessageType`: Enum for WebSocket message types
 - `WSMessage`: Base WebSocket message wrapper
 - Request models: `StartTrialRequest`, `UserInputRequest`
@@ -125,6 +133,19 @@ debate_mfxb2/
 - `Settings` class with Pydantic settings
 - CORS origins configuration
 - Checkpoint namespace settings
+- 数据库 / MinIO 默认值指向 docker-compose 容器网络（`postgres:5432`、`minio:9000`），本地开发通过 `.env` 覆盖回 `localhost`
+
+**业务路由（`src/api/business/`）**
+- `auth.py` — `/api/login`、`/api/register` 等认证接口
+- `cases.py` — `/api/cases` 案件 CRUD 与 OCR 记录
+- `files.py` — 文件元数据与用户信息
+- `storage.py` — `/api/oss` MinIO 预签名上传/预览
+- `materials.py` — 案件材料生成
+
+**数据模型（`src/api/models/`）**
+- `base.py` — 异步 engine / session 工厂、`Base`、`get_db` 依赖
+- `case.py` — `CaseModel`、`FileModel`
+- `user.py` — `User`
 
 **LLM Configuration (`src/llmconfig.py`)**
 - `models` dict containing:
@@ -172,13 +193,17 @@ debate_mfxb2/
 
 ### Graph Entry Point
 
-The main graph is defined in `src/test.py` and exported as `app`. This is referenced in `langgraph.json` as the "agents" graph.
+The main graph is defined in `src/court_flow.py` and exported as `app` (compiled, for direct run / LangSmith) and `raw_graph` (uncompiled, for API compile with MemorySaver). This is referenced in `langgraph.json` as the "agents" graph.
 
 ## Configuration
 
-Environment variables (`.env`):
-- `OPENAI_API_KEY` - DeepSeek API key
-- `OPENAI_API_BASE` - DeepSeek API endpoint
+环境变量（`.env`，参考 `.env.example`）：
+- `OPENAI_API_KEY` / `OPENAI_API_BASE` / `MODEL_NAME` — LLM 接入
+- `LANGSMITH_*` — LangSmith 追踪
+- `DATABASE_URL` — 默认 `postgresql+asyncpg://postgres:court123@postgres:5432/court_system`（容器网络）；本地开发覆盖为 `localhost:5432`
+- `MINIO_ENDPOINT` / `MINIO_ACCESS_KEY` / `MINIO_SECRET_KEY` / `MINIO_BUCKET` — 默认指向 `minio:9000`；本地开发覆盖为 `localhost:9000`
+
+> 注意：`.env` 已在 `.gitignore` 中，不会进入 git；镜像构建也不再读取 `.env`，运行时由 `docker compose --env-file` 或容器环境变量注入。
 
 ## Constants (src/state.py)
 
